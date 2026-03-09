@@ -1,0 +1,104 @@
+#mini rpg
+
+import random
+import time
+
+
+def slow_print(text):
+    for char in text:
+        print(char, end='', flush=True)
+        time.sleep(0.03)
+    print()
+
+def get_choice(options):
+    for i, opt in enumerate(options, 1):
+        print(f"  [{i}] {opt}")
+    while True:
+        try:
+            c = int(input("\n> "))
+            if 1 <= c <= len(options):
+                return c
+        except ValueError:
+            pass
+        print("  Invalid choice.")
+
+def battle(player, enemy, hp, dmg, gold):
+    slow_print(f"\n  A {enemy} appears! (HP: {hp})")
+    while hp > 0 and player['hp'] > 0:
+        print(f"\n  Your HP: {player['hp']}  |  {enemy} HP: {hp}")
+        choice = get_choice(["Attack", "Power Strike (risky, double dmg)", "Run"])
+        if choice == 1:
+            d = random.randint(8, 15) + player['level'] * 2
+            hp -= d
+            slow_print(f"  You deal {d} damage!")
+        elif choice == 2:
+            if random.random() > 0.5:
+                d = random.randint(16, 30) + player['level'] * 2
+                hp -= d
+                slow_print(f"   Critical! {d} damage!")
+            else:
+                slow_print("  You missed!")
+        else:
+            slow_print("  You fled!")
+            return False
+        if hp > 0:
+            taken = random.randint(dmg - 2, dmg + 2)
+            player['hp'] -= taken
+            slow_print(f"  {enemy} hits you for {taken}!")
+    if player['hp'] <= 0:
+        return None
+    slow_print(f"   {enemy} defeated! +{gold} gold")
+    player['gold'] += gold
+    return True
+
+def shop(player):
+    slow_print(f"\n Shop  (Gold: {player['gold']})")
+    c = get_choice(["Potion +30 HP (20g)", "Level Up (50g)", "Leave"])
+    if c == 1 and player['gold'] >= 20:
+        player['gold'] -= 20
+        player['hp'] = min(player['hp'] + 30, player['max_hp'])
+        slow_print("  Healed 30 HP!")
+    elif c == 2 and player['gold'] >= 50:
+        player['gold'] -= 50
+        player['level'] += 1
+        player['max_hp'] += 20
+        player['hp'] = player['max_hp']
+        slow_print(f"  ⬆  Level {player['level']}! Full HP!")
+    elif c in (1, 2):
+        slow_print("  Not enough gold!")
+
+def main():
+    print("=" * 36)
+    print("     DRAGON'S DUNGEON ")
+    print("=" * 36)
+    name = input("\n  Hero name: ").strip() or "Hero"
+    player = {"name": name, "hp": 100, "max_hp": 100, "gold": 10, "level": 1}
+    slow_print(f"\n  Good luck, {player['name']}!\n")
+
+    floors = [
+        ("Goblin",     20,  5,  15),
+        ("Skeleton",   35,  8,  25),
+        ("Troll",      55, 12,  40),
+        ("Dark Knight",80, 16,  60),
+        ("Dragon",    120, 22, 100),
+    ]
+
+    for i, (enemy, hp, dmg, gold) in enumerate(floors):
+        print(f"\n{'='*36}\n   Floor {i+1}  |  HP: {player['hp']}  |  Gold: {player['gold']}\n{'='*36}")
+        if i > 0 and random.random() > 0.5:
+            shop(player)
+        result = battle(player, enemy, hp, dmg, gold)
+        if result is None:
+            slow_print("\n You died. GAME OVER.")
+            slow_print(f"  Reached floor {i+1} | Gold: {player['gold']}")
+            return
+        if result is False:
+            slow_print("  You escaped. Quest abandoned.")
+            return
+        player['hp'] = min(player['hp'] + 15, player['max_hp'])
+        slow_print("  You rest and recover 15 HP.")
+
+    slow_print("\n🎉🎉🎉🎉 YOU BEAT THE DUNGEON HELL YEAHH! 🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉")
+    slow_print(f"  Level: {player['level']} | Gold: {player['gold']}")
+
+main()
